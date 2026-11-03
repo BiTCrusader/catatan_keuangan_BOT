@@ -1,0 +1,148 @@
+// Prisma schema for AI Personal Finance Telegram Bot
+// Designed for serverless deployment on Vercel with Neon/Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionCategory {
+  MAKANAN
+  TRANSPORTASI
+  PENDIDIKAN
+  HIBURAN
+  TAGIHAN
+  KESEHATAN
+  BELANJA
+  LAIN_LAIN
+}
+
+enum ReminderType {
+  DAILY
+  MONTHLY
+  BILL
+  SAVINGS
+  EXPENSE
+}
+
+enum ReminderStatus {
+  ACTIVE
+  PAUSED
+  SENT
+  FAILED
+}
+
+model User {
+  id                    String                @id @default(cuid())
+  telegramId            String                @unique
+  username              String?
+  firstName             String?
+  lastName              String?
+  initialBalance        Decimal               @default(0) @db.Decimal(15, 2)
+  isRegistered          Boolean               @default(false)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  transactions          Transaction[]
+  savingsGoals          SavingsGoal[]
+  savingsContributions  SavingsContribution[]
+  reminders             Reminder[]
+  settings              UserSettings?
+
+  @@index([telegramId])
+}
+
+model Transaction {
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            TransactionType
+  category        TransactionCategory @default(LAIN_LAIN)
+  amount          Decimal             @db.Decimal(15, 2)
+  description     String
+  transactionDate DateTime            @default(now())
+  isDeleted       Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([userId, transactionDate])
+  @@index([userId, isDeleted])
+  @@index([userId, type])
+}
+
+model SavingsGoal {
+  id            String                @id @default(cuid())
+  userId        String
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  targetAmount  Decimal               @db.Decimal(15, 2)
+  currentAmount Decimal               @default(0) @db.Decimal(15, 2)
+  deadline      DateTime?
+  isCompleted   Boolean               @default(false)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  contributions SavingsContribution[]
+
+  @@index([userId])
+}
+
+model SavingsContribution {
+  id            String      @id @default(cuid())
+  savingsGoalId String
+  savingsGoal   SavingsGoal @relation(fields: [savingsGoalId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount        Decimal     @db.Decimal(15, 2)
+  note          String?
+  createdAt     DateTime    @default(now())
+
+  @@index([savingsGoalId])
+  @@index([userId])
+}
+
+model Reminder {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  type          ReminderType   @default(DAILY)
+  reminderTime  String         // Format: "HH:mm" (e.g., "08:00" or "20:00" WITA)
+  dayOfMonth    Int?           // 1-31 for monthly / bill reminders
+  isActive      Boolean        @default(true)
+  status        ReminderStatus @default(ACTIVE)
+  lastSentAt    DateTime?
+  nextDueAt     DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId, isActive])
+  @@index([isActive, nextDueAt])
+}
+
+model ProcessedTelegramUpdate {
+  updateId    String   @id
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}
+
+model UserSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timezone  String   @default("Asia/Makassar")
+  currency  String   @default("IDR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

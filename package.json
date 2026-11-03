@@ -1,0 +1,43 @@
+{
+  "name": "ai-personal-finance-telegram-bot",
+  "version": "1.0.0",
+  "description": "AI Personal Finance Telegram Bot hosted on Vercel Serverless with PostgreSQL and Prisma",
+  "main": "api/webhook.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
+    "set-webhook": "node scripts/setWebhook.js"
+  },
+  "keywords": [
+    "telegram-bot",
+    "personal-finance",
+    "vercel",
+    "serverless",
+    "prisma",
+    "postgresql",
+    "gemini",
+    "groq"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "6.19.3",
+    "dayjs": "^1.11.23",
+    "dotenv": "^18.0.9",
+    "exceljs": "^4.4.0",
+    "groq-sdk": "^1.6.0",
+    "pdfkit": "^0.20.2",
+    "telegraf": "^4.16.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "prisma": "6.19.3",
+    "vitest": "^5.1.0"
+  }
+}
