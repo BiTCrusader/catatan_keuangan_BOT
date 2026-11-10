@@ -2,12 +2,12 @@ import { menuKeyboards } from '../keyboards/menuKeyboards.js';
 
 export async function handleExportMenu(ctx) {
   return await ctx.reply(
-    '📥 **EKSPOR LAPORAN KEUANGAN**\n\n' +
+    '📥 <b>EKSPOR LAPORAN KEUANGAN</b>\n\n' +
     'Silakan pilih format laporan yang ingin Anda unduh:\n\n' +
-    '• **PDF**: Dokumen siap cetak dan mudah dibaca.\n' +
-    '• **Excel (XLSX)**: Spreadsheet lengkap dengan rumus dan rincian data transaksi.',
+    '• <b>PDF</b>: Dokumen siap cetak dan mudah dibaca.\n' +
+    '• <b>Excel (XLSX)</b>: Spreadsheet lengkap dengan rumus dan rincian data transaksi.',
     {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       ...menuKeyboards.exportMenu(),
     }
   );

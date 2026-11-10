@@ -4,6 +4,7 @@ import { reportService } from '../../services/report/reportService.js';
 import { savingsService } from '../../services/savings/savingsService.js';
 import { reminderService } from '../../services/reminder/reminderService.js';
 import { formatIDR, parseNaturalAmount } from '../../utils/currency.js';
+import { escapeHtml } from '../../utils/format.js';
 import { menuKeyboards } from '../keyboards/menuKeyboards.js';
 import { handleSaldo } from '../commands/saldo.js';
 import { handleStart } from '../commands/start.js';
@@ -24,19 +25,20 @@ export async function handleTextMessage(ctx) {
       const balance = await transactionService.getBalance(user.id);
 
       return await ctx.reply(
-        `✅ **Saldo awal berhasil diatur!**\n\n` +
-        `🏦 Saldo awal Anda: **${formatIDR(parsedAmount)}**\n` +
-        `💎 Saldo sekarang: **${formatIDR(balance.currentBalance)}**\n\n` +
+        `✅ <b>Saldo awal berhasil diatur!</b>\n\n` +
+        `🏦 Saldo awal Anda: <b>${formatIDR(parsedAmount)}</b>\n` +
+        `💎 Saldo sekarang: <b>${formatIDR(balance.currentBalance)}</b>\n\n` +
         `Mulai sekarang Anda bisa langsung mencatat pengeluaran atau pemasukan secara natural!\n` +
-        `Contoh: *"Beli bensin 30rb"*, *"Gaji 3 juta"*, atau kirim foto struk belanja.`,
+        `Contoh: <i>"Beli bensin 30rb"</i>, <i>"Gaji 3 juta"</i>, atau kirim foto struk belanja.`,
         {
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           ...menuKeyboards.mainMenu(),
         }
       );
     } else {
       return await ctx.reply(
-        `⚠️ Mohon masukkan nominal saldo awal Anda dengan jelas.\nContoh: *"2 juta"*, *"Rp 1.500.000"*, atau *"500rb"*.`
+        `⚠️ Mohon masukkan nominal saldo awal Anda dengan jelas.\nContoh: <i>"2 juta"</i>, <i>"Rp 1.500.000"</i>, atau <i>"500rb"</i>.`,
+        { parse_mode: 'HTML' }
       );
     }
   }
@@ -64,8 +66,8 @@ export async function handleTextMessage(ctx) {
     // If clarification is needed
     if (aiResult.clarificationNeeded && !aiResult.transaction?.amount) {
       return await ctx.reply(
-        `🤔 ${aiResult.clarificationNeeded}\n\n*Contoh: "Beli nasi goreng 20rb" atau "Gaji freelance 1,5 juta"*`,
-        { parse_mode: 'Markdown' }
+        `🤔 ${escapeHtml(aiResult.clarificationNeeded)}\n\n<i>Contoh: "Beli nasi goreng 20rb" atau "Gaji freelance 1,5 juta"</i>`,
+        { parse_mode: 'HTML' }
       );
     }
 
@@ -93,15 +95,15 @@ export async function handleTextMessage(ctx) {
       const icon = tx.type === 'INCOME' ? '🟢' : '🔴';
 
       const replyMsg =
-        `✅ **Transaksi berhasil dicatat!**\n\n` +
-        `${icon} **Jenis**: ${typeLabel}\n` +
-        `📁 **Kategori**: ${tx.category}\n` +
-        `📝 **Keterangan**: ${tx.description}\n` +
-        `💵 **Nominal**: ${formatIDR(tx.amount)}\n\n` +
-        `💎 **Saldo sekarang**: ${formatIDR(balance.currentBalance)}`;
+        `✅ <b>Transaksi berhasil dicatat!</b>\n\n` +
+        `${icon} <b>Jenis</b>: ${typeLabel}\n` +
+        `📁 <b>Kategori</b>: ${escapeHtml(tx.category)}\n` +
+        `📝 <b>Keterangan</b>: ${escapeHtml(tx.description)}\n` +
+        `💵 <b>Nominal</b>: ${formatIDR(tx.amount)}\n\n` +
+        `💎 <b>Saldo sekarang</b>: ${formatIDR(balance.currentBalance)}`;
 
       return await ctx.reply(replyMsg, {
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
         ...menuKeyboards.mainMenu(),
       });
     }
@@ -112,11 +114,11 @@ export async function handleTextMessage(ctx) {
       const balance = await transactionService.getBalance(user.id);
 
       return await ctx.reply(
-        `✅ **Saldo awal berhasil diperbarui!**\n\n` +
-        `🏦 Saldo awal baru: **${formatIDR(aiResult.initialBalance.amount)}**\n` +
-        `💎 Saldo saat ini: **${formatIDR(balance.currentBalance)}**`,
+        `✅ <b>Saldo awal berhasil diperbarui!</b>\n\n` +
+        `🏦 Saldo awal baru: <b>${formatIDR(aiResult.initialBalance.amount)}</b>\n` +
+        `💎 Saldo saat ini: <b>${formatIDR(balance.currentBalance)}</b>`,
         {
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           ...menuKeyboards.mainMenu(),
         }
       );
@@ -133,12 +135,12 @@ export async function handleTextMessage(ctx) {
         });
 
         return await ctx.reply(
-          `🎯 **Target Tabungan Berhasil Dibuat!**\n\n` +
-          `📌 Nama: **${goal.name}**\n` +
-          `🎯 Target: **${formatIDR(targetAmount)}**\n\n` +
-          `Ketik *"Nabung 100rb buat ${goal.name}"* setiap kali Anda menabung!`,
+          `🎯 <b>Target Tabungan Berhasil Dibuat!</b>\n\n` +
+          `📌 Nama: <b>${escapeHtml(goal.name)}</b>\n` +
+          `🎯 Target: <b>${formatIDR(targetAmount)}</b>\n\n` +
+          `Ketik <i>"Nabung 100rb buat ${escapeHtml(goal.name)}"</i> setiap kali Anda menabung!`,
           {
-            parse_mode: 'Markdown',
+            parse_mode: 'HTML',
             ...menuKeyboards.savingsMenu(),
           }
         );
@@ -154,13 +156,13 @@ export async function handleTextMessage(ctx) {
         );
 
         return await ctx.reply(
-          `🎉 **Setoran Tabungan Berhasil!**\n\n` +
-          `📌 Target: **${result.goal.name}**\n` +
-          `💰 Disetor: **${formatIDR(amount)}**\n` +
-          `📈 Terkumpul: **${formatIDR(result.goal.currentAmount)} / ${formatIDR(result.goal.targetAmount)}** (${progress}%)\n` +
-          (result.goal.isCompleted ? `\n🏆 **SELAMAT! Target tabungan ini telah tercapai!** 🥳` : ''),
+          `🎉 <b>Setoran Tabungan Berhasil!</b>\n\n` +
+          `📌 Target: <b>${escapeHtml(result.goal.name)}</b>\n` +
+          `💰 Disetor: <b>${formatIDR(amount)}</b>\n` +
+          `📈 Terkumpul: <b>${formatIDR(result.goal.currentAmount)} / ${formatIDR(result.goal.targetAmount)}</b> (${progress}%)\n` +
+          (result.goal.isCompleted ? `\n🏆 <b>SELAMAT! Target tabungan ini telah tercapai!</b> 🥳` : ''),
           {
-            parse_mode: 'Markdown',
+            parse_mode: 'HTML',
             ...menuKeyboards.savingsMenu(),
           }
         );
@@ -180,13 +182,13 @@ export async function handleTextMessage(ctx) {
       });
 
       return await ctx.reply(
-        `⏰ **Pengingat Berhasil Diatur!**\n\n` +
-        `🔔 **Judul**: ${rem.title}\n` +
-        `⏰ **Waktu**: ${rem.reminderTime} WITA (${rem.type})\n` +
+        `⏰ <b>Pengingat Berhasil Diatur!</b>\n\n` +
+        `🔔 <b>Judul</b>: ${escapeHtml(rem.title)}\n` +
+        `⏰ <b>Waktu</b>: ${escapeHtml(rem.reminderTime)} WITA (${escapeHtml(rem.type)})\n` +
         (rem.dayOfMonth ? `📅 Setiap tanggal: ${rem.dayOfMonth}\n\n` : '\n') +
         `Bot akan otomatis mengirimkan notifikasi pada jam tersebut.`,
         {
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           ...menuKeyboards.mainMenu(),
         }
       );
@@ -209,10 +211,7 @@ export async function handleTextMessage(ctx) {
       transactionCount: monthlyReport.metrics.transactionCount,
     });
 
-    return await ctx.reply(insight, {
-      parse_mode: 'Markdown',
-      ...menuKeyboards.mainMenu(),
-    });
+    return await ctx.reply(insight, menuKeyboards.mainMenu());
   } catch (error) {
     logger.error('Error handling text message:', error.message);
     return await ctx.reply(

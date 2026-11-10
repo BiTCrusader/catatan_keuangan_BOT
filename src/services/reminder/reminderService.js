@@ -1,5 +1,6 @@
 import { prisma } from '../../config/database.js';
 import { dayjs } from '../../utils/date.js';
+import { escapeHtml, stripHtml } from '../../utils/format.js';
 import { logger } from '../../utils/logger.js';
 
 export const reminderService = {
@@ -100,14 +101,22 @@ export const reminderService = {
       if (isTimeDue && isDayDue) {
         try {
           const reminderMsg =
-            `⏰ **PENGINGAT KEUANGAN**\n\n` +
-            `🔔 **${reminder.title}**\n` +
-            `Waktu: ${reminder.reminderTime} WITA\n\n` +
+            `⏰ <b>PENGINGAT KEUANGAN</b>\n\n` +
+            `🔔 <b>${escapeHtml(reminder.title)}</b>\n` +
+            `Waktu: ${escapeHtml(reminder.reminderTime)} WITA\n\n` +
             `Jangan lupa catat transaksi hari ini dengan mengetik pesan biasa ke bot ini! ✨`;
 
-          await bot.telegram.sendMessage(reminder.user.telegramId, reminderMsg, {
-            parse_mode: 'Markdown',
-          });
+          try {
+            await bot.telegram.sendMessage(reminder.user.telegramId, reminderMsg, {
+              parse_mode: 'HTML',
+            });
+          } catch (sendErr) {
+            if (sendErr?.message?.includes("can't parse entities")) {
+              await bot.telegram.sendMessage(reminder.user.telegramId, stripHtml(reminderMsg));
+            } else {
+              throw sendErr;
+            }
+          }
 
           await prisma.reminder.update({
             where: { id: reminder.id },

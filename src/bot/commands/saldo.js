@@ -7,16 +7,16 @@ export async function handleSaldo(ctx) {
   const balance = await transactionService.getBalance(user.id);
 
   const msg =
-    `💰 **RINGKASAN SALDO KEUANGAN**\n\n` +
-    `🏦 **Saldo Awal**: ${formatIDR(balance.initialBalance)}\n` +
-    `🟢 **Total Pemasukan**: ${formatIDR(balance.totalIncome)}\n` +
-    `🔴 **Total Pengeluaran**: ${formatIDR(balance.totalExpense)}\n` +
+    `💰 <b>RINGKASAN SALDO KEUANGAN</b>\n\n` +
+    `🏦 <b>Saldo Awal</b>: ${formatIDR(balance.initialBalance)}\n` +
+    `🟢 <b>Total Pemasukan</b>: ${formatIDR(balance.totalIncome)}\n` +
+    `🔴 <b>Total Pengeluaran</b>: ${formatIDR(balance.totalExpense)}\n` +
     `──────────────────\n` +
-    `💎 **SALDO SEKARANG**: ${formatIDR(balance.currentBalance)}\n\n` +
-    `💡 *Tips*: Ketik pemasukan atau pengeluaran secara langsung untuk memperbarui saldo.`;
+    `💎 <b>SALDO SEKARANG</b>: ${formatIDR(balance.currentBalance)}\n\n` +
+    `💡 <i>Tips</i>: Ketik pemasukan atau pengeluaran secara langsung untuk memperbarui saldo.`;
 
   return await ctx.reply(msg, {
-    parse_mode: 'Markdown',
+    parse_mode: 'HTML',
     ...menuKeyboards.saldoMenu(),
   });
 }

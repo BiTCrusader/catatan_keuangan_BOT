@@ -7,7 +7,7 @@ export async function handleTabungan(ctx) {
   const text = savingsService.formatGoalsMessage(goals);
 
   return await ctx.reply(text, {
-    parse_mode: 'Markdown',
+    parse_mode: 'HTML',
     ...menuKeyboards.savingsMenu(),
   });
 }

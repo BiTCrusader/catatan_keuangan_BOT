@@ -1,11 +1,12 @@
 import { menuKeyboards } from '../keyboards/menuKeyboards.js';
+import { escapeHtml } from '../../utils/format.js';
 
 export async function handleMenu(ctx) {
-  const firstName = ctx.from?.first_name || 'Teman';
+  const firstName = escapeHtml(ctx.from?.first_name || 'Teman');
   return await ctx.reply(
-    `📋 **MENU UTAMA KEUANGAN**\n\nHalo ${firstName}, silakan pilih menu yang ingin Anda akses:`,
+    `📋 <b>MENU UTAMA KEUANGAN</b>\n\nHalo ${firstName}, silakan pilih menu yang ingin Anda akses:`,
     {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       ...menuKeyboards.mainMenu(),
     }
   );

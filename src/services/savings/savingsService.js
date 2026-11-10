@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database.js';
 import { Prisma } from '@prisma/client';
 import { formatIDR } from '../../utils/currency.js';
+import { escapeHtml } from '../../utils/format.js';
 
 export const savingsService = {
   /**
@@ -123,18 +124,18 @@ export const savingsService = {
   formatGoalsMessage(goals) {
     if (!goals || goals.length === 0) {
       return (
-        '🎯 **TARGET TABUNGAN**\n\n' +
+        '🎯 <b>TARGET TABUNGAN</b>\n\n' +
         'Anda belum memiliki target tabungan.\n\n' +
         '💡 Buat sekarang dengan mengirim pesan:\n' +
-        '*"Buat target tabungan Laptop 8 juta"*\n' +
+        '<i>"Buat target tabungan Laptop 8 juta"</i>\n' +
         'atau klik tombol di bawah!'
       );
     }
 
-    let msg = '🎯 **DAFTAR TARGET TABUNGAN ANDA**\n\n';
+    let msg = '🎯 <b>DAFTAR TARGET TABUNGAN ANDA</b>\n\n';
     for (const g of goals) {
       const statusIcon = g.isCompleted ? '✅' : '⏳';
-      msg += `${statusIcon} **${g.name}**\n`;
+      msg += `${statusIcon} <b>${escapeHtml(g.name)}</b>\n`;
       msg += `• Target: ${formatIDR(g.numericTarget)}\n`;
       msg += `• Terkumpul: ${formatIDR(g.numericCurrent)} (${g.progress}%)\n`;
       msg += `• Sisa: ${formatIDR(g.remaining)}\n`;

@@ -18,10 +18,31 @@ import { handleBantuan } from './commands/bantuan.js';
 import { handleTextMessage } from './handlers/textHandler.js';
 import { handleCallbackQuery } from './handlers/callbackHandler.js';
 import { handlePhotoMessage } from './handlers/photoHandler.js';
+import { stripHtml } from '../utils/format.js';
 import { logger } from '../utils/logger.js';
 
 export function createBot() {
   const bot = new Telegraf(env.TELEGRAM_BOT_TOKEN);
+
+  // Safe reply wrapper to catch entity parsing errors and retry as clean plain text
+  bot.use(async (ctx, next) => {
+    if (ctx.reply) {
+      const origReply = ctx.reply.bind(ctx);
+      ctx.reply = async (text, extra = {}) => {
+        try {
+          return await origReply(text, extra);
+        } catch (err) {
+          if (err?.message?.includes("can't parse entities")) {
+            logger.warn(`Telegram entity parsing failed, retrying plain text: ${err.message}`);
+            const { parse_mode, ...safeExtra } = extra;
+            return await origReply(stripHtml(text), safeExtra);
+          }
+          throw err;
+        }
+      };
+    }
+    return await next();
+  });
 
   // Middlewares
   bot.use(dedupMiddleware);

@@ -30,6 +30,6 @@ describe('Financial Report Service', () => {
     expect(text).toContain('MAKANAN: Rp\u00a01.200.000 (60.0%)');
     expect(text).toContain('TRANSPORTASI: Rp\u00a0800.000 (40.0%)');
     expect(text).toContain('Pengeluaran hemat 20% dibanding periode sebelumnya');
-    expect(text).toContain('**Saldo Saat Ini**: Rp\u00a08.000.000');
+    expect(text).toContain('<b>Saldo Saat Ini</b>: Rp\u00a08.000.000');
   });
 });

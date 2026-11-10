@@ -9,7 +9,7 @@ export async function handleLaporanHariIni(ctx) {
   const text = reportService.formatReportMessage(report);
 
   return await ctx.reply(text, {
-    parse_mode: 'Markdown',
+    parse_mode: 'HTML',
     ...menuKeyboards.reportMenu(),
   });
 }
@@ -21,7 +21,7 @@ export async function handleLaporanMingguIni(ctx) {
   const text = reportService.formatReportMessage(report);
 
   return await ctx.reply(text, {
-    parse_mode: 'Markdown',
+    parse_mode: 'HTML',
     ...menuKeyboards.reportMenu(),
   });
 }
@@ -33,7 +33,7 @@ export async function handleLaporanBulanIni(ctx) {
   const text = reportService.formatReportMessage(report);
 
   return await ctx.reply(text, {
-    parse_mode: 'Markdown',
+    parse_mode: 'HTML',
     ...menuKeyboards.reportMenu(),
   });
 }

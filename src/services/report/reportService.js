@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database.js';
 import { getTodayRange, getThisWeekRange, getThisMonthRange, getLastMonthRange, dayjs } from '../../utils/date.js';
 import { formatIDR } from '../../utils/currency.js';
+import { escapeHtml } from '../../utils/format.js';
 import { transactionService } from '../transaction/transactionService.js';
 
 export const reportService = {
@@ -124,17 +125,17 @@ export const reportService = {
   formatReportMessage(reportData) {
     const { period, dateRangeStr, metrics, balance, comparison } = reportData;
 
-    let msg = `📊 **LAPORAN KEUANGAN (${period.toUpperCase()})**\n`;
-    msg += `📅 *${dateRangeStr}*\n\n`;
+    let msg = `📊 <b>LAPORAN KEUANGAN (${escapeHtml(period.toUpperCase())})</b>\n`;
+    msg += `📅 <i>${escapeHtml(dateRangeStr)}</i>\n\n`;
 
-    msg += `🟢 **Total Pemasukan**: ${formatIDR(metrics.totalIncome)}\n`;
-    msg += `🔴 **Total Pengeluaran**: ${formatIDR(metrics.totalExpense)}\n`;
-    msg += `⚖️ **Selisih**: ${formatIDR(metrics.net)}\n\n`;
+    msg += `🟢 <b>Total Pemasukan</b>: ${formatIDR(metrics.totalIncome)}\n`;
+    msg += `🔴 <b>Total Pengeluaran</b>: ${formatIDR(metrics.totalExpense)}\n`;
+    msg += `⚖️ <b>Selisih</b>: ${formatIDR(metrics.net)}\n\n`;
 
     if (metrics.categoryBreakdown.length > 0) {
-      msg += `📁 **Rincian Pengeluaran per Kategori:**\n`;
+      msg += `📁 <b>Rincian Pengeluaran per Kategori:</b>\n`;
       for (const cat of metrics.categoryBreakdown) {
-        msg += `• ${cat.category}: ${formatIDR(cat.amount)} (${cat.percentage}%)\n`;
+        msg += `• ${escapeHtml(cat.category)}: ${formatIDR(cat.amount)} (${cat.percentage}%)\n`;
       }
       msg += '\n';
     } else {
@@ -151,7 +152,7 @@ export const reportService = {
       }
     }
 
-    msg += `💰 **Saldo Saat Ini**: ${formatIDR(balance.currentBalance)}`;
+    msg += `💰 <b>Saldo Saat Ini</b>: ${formatIDR(balance.currentBalance)}`;
     return msg;
   },
 };

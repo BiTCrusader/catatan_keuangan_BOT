@@ -16,6 +16,7 @@ import { generateFinancialInsight } from '../../services/ai/aiService.js';
 import { pdfService } from '../../services/export/pdfService.js';
 import { excelService } from '../../services/export/excelService.js';
 import { formatIDR } from '../../utils/currency.js';
+import { escapeHtml } from '../../utils/format.js';
 import { menuKeyboards } from '../keyboards/menuKeyboards.js';
 import { logger } from '../../utils/logger.js';
 import { env } from '../../config/env.js';
@@ -44,13 +45,13 @@ export async function handleCallbackQuery(ctx) {
 
     if (data === 'savings_new_help') {
       return await ctx.reply(
-        '💡 **Cara Membuat Target Tabungan:**\n\n' +
+        '💡 <b>Cara Membuat Target Tabungan:</b>\n\n' +
         'Ketik di chat:\n' +
-        '• *"Buat target tabungan Laptop 8 juta"*\n' +
-        '• *"Buat target tabungan Liburan 5.000.000"*\n\n' +
+        '• <i>"Buat target tabungan Laptop 8 juta"</i>\n' +
+        '• <i>"Buat target tabungan Liburan 5.000.000"</i>\n\n' +
         'Lalu tambah tabungan dengan cara:\n' +
-        '• *"Nabung 200rb buat laptop"*',
-        { parse_mode: 'Markdown' }
+        '• <i>"Nabung 200rb buat laptop"</i>',
+        { parse_mode: 'HTML' }
       );
     }
 
@@ -69,12 +70,12 @@ export async function handleCallbackQuery(ctx) {
       }
 
       return await ctx.reply(
-        `⚠️ **Konfirmasi Hapus Transaksi**\n\n` +
-        `Keterangan: **${tx.description}**\n` +
-        `Nominal: **${formatIDR(tx.amount)}** (${tx.type})\n\n` +
+        `⚠️ <b>Konfirmasi Hapus Transaksi</b>\n\n` +
+        `Keterangan: <b>${escapeHtml(tx.description)}</b>\n` +
+        `Nominal: <b>${formatIDR(tx.amount)}</b> (${escapeHtml(tx.type)})\n\n` +
         `Apakah Anda yakin ingin membatalkan/menghapus transaksi ini?`,
         {
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           ...menuKeyboards.confirmDelete(tx.id),
         }
       );
@@ -87,10 +88,10 @@ export async function handleCallbackQuery(ctx) {
       const balance = await transactionService.getBalance(user.id);
 
       return await ctx.reply(
-        `🗑 **Transaksi berhasil dibatalkan/dihapus!**\n\n` +
-        `💎 Saldo sekarang: **${formatIDR(balance.currentBalance)}**`,
+        `🗑 <b>Transaksi berhasil dibatalkan/dihapus!</b>\n\n` +
+        `💎 Saldo sekarang: <b>${formatIDR(balance.currentBalance)}</b>`,
         {
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           ...menuKeyboards.mainMenu(),
         }
       );
@@ -98,7 +99,7 @@ export async function handleCallbackQuery(ctx) {
 
     // 5. AI Insight Button
     if (data === 'menu_ai_insight') {
-      await ctx.reply('🤖 *AI sedang menganalisis data keuangan Anda...*', { parse_mode: 'Markdown' });
+      await ctx.reply('🤖 <i>AI sedang menganalisis data keuangan Anda...</i>', { parse_mode: 'HTML' });
 
       const tz = user.settings?.timezone || env.TIMEZONE;
       const monthlyReport = await reportService.getMonthlyReport(user.id, tz);
@@ -116,15 +117,12 @@ export async function handleCallbackQuery(ctx) {
         transactionCount: monthlyReport.metrics.transactionCount,
       });
 
-      return await ctx.reply(insight, {
-        parse_mode: 'Markdown',
-        ...menuKeyboards.mainMenu(),
-      });
+      return await ctx.reply(insight, menuKeyboards.mainMenu());
     }
 
     // 6. Export PDF
     if (data === 'export_pdf') {
-      await ctx.reply('⏳ *Sedang menyusun file PDF laporan keuangan Anda...*', { parse_mode: 'Markdown' });
+      await ctx.reply('⏳ <i>Sedang menyusun file PDF laporan keuangan Anda...</i>', { parse_mode: 'HTML' });
       const tz = user.settings?.timezone || env.TIMEZONE;
       const pdfBuffer = await pdfService.generateTransactionPDF(user.id, tz);
 
@@ -141,7 +139,7 @@ export async function handleCallbackQuery(ctx) {
 
     // 7. Export Excel
     if (data === 'export_excel') {
-      await ctx.reply('⏳ *Sedang menyusun file Excel laporan keuangan Anda...*', { parse_mode: 'Markdown' });
+      await ctx.reply('⏳ <i>Sedang menyusun file Excel laporan keuangan Anda...</i>', { parse_mode: 'HTML' });
       const tz = user.settings?.timezone || env.TIMEZONE;
       const excelBuffer = await excelService.generateTransactionExcel(user.id, tz);
 
@@ -175,13 +173,13 @@ export async function handleCallbackQuery(ctx) {
       const balance = await transactionService.getBalance(user.id);
 
       return await ctx.reply(
-        `✅ **Struk berhasil disimpan!**\n\n` +
-        `🏪 Toko: **${rcpt.merchant || 'Toko'}**\n` +
-        `💵 Total: **${formatIDR(tx.amount)}**\n` +
-        `📁 Kategori: ${tx.category}\n\n` +
-        `💎 Saldo sekarang: **${formatIDR(balance.currentBalance)}**`,
+        `✅ <b>Struk berhasil disimpan!</b>\n\n` +
+        `🏪 Toko: <b>${escapeHtml(rcpt.merchant || 'Toko')}</b>\n` +
+        `💵 Total: <b>${formatIDR(tx.amount)}</b>\n` +
+        `📁 Kategori: ${escapeHtml(tx.category)}\n\n` +
+        `💎 Saldo sekarang: <b>${formatIDR(balance.currentBalance)}</b>`,
         {
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           ...menuKeyboards.mainMenu(),
         }
       );

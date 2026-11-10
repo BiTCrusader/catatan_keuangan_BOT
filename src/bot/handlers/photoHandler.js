@@ -1,5 +1,6 @@
 import { ocrService } from '../../services/ocr/ocrService.js';
 import { formatIDR } from '../../utils/currency.js';
+import { escapeHtml } from '../../utils/format.js';
 import { menuKeyboards } from '../keyboards/menuKeyboards.js';
 import { logger } from '../../utils/logger.js';
 
@@ -10,8 +11,8 @@ export async function handlePhotoMessage(ctx, bot) {
   // Telegram sends photos in multiple sizes; pick the largest
   const largestPhoto = photos[photos.length - 1];
 
-  await ctx.reply('🔍 *Sedang memindai gambar struk dengan AI OCR...*', {
-    parse_mode: 'Markdown',
+  await ctx.reply('🔍 <i>Sedang memindai gambar struk dengan AI OCR...</i>', {
+    parse_mode: 'HTML',
   });
 
   try {
@@ -20,25 +21,25 @@ export async function handlePhotoMessage(ctx, bot) {
 
     if (!result.isClear || !result.totalAmount) {
       return await ctx.reply(
-        '⚠️ **Nominal struk tidak terbaca jelas.**\n\n' +
-        (result.notes || 'Pastikan foto struk memiliki pencahayaan cukup dan tidak blur.') +
+        '⚠️ <b>Nominal struk tidak terbaca jelas.</b>\n\n' +
+        escapeHtml(result.notes || 'Pastikan foto struk memiliki pencahayaan cukup dan tidak blur.') +
         '\n\nSilakan catat manual dengan mengetik nominal, contoh:\n' +
-        '*"Beli belanjaan 75rb"*\n' +
+        '<i>"Beli belanjaan 75rb"</i>\n' +
         'atau kirim ulang foto yang lebih jelas.',
-        { parse_mode: 'Markdown' }
+        { parse_mode: 'HTML' }
       );
     }
 
-    let preview = `🧾 **HASIL PEMINDAIAN STRUK PEMBAYARAN**\n\n`;
-    preview += `🏪 **Toko / Merchant**: ${result.merchantName || '-'}\n`;
-    if (result.transactionDate) preview += `📅 **Tanggal**: ${result.transactionDate}\n`;
-    preview += `💰 **Total Pembayaran**: **${formatIDR(result.totalAmount)}**\n`;
-    preview += `📁 **Kategori**: ${result.suggestedCategory || 'BELANJA'}\n\n`;
+    let preview = `🧾 <b>HASIL PEMINDAIAN STRUK PEMBAYARAN</b>\n\n`;
+    preview += `🏪 <b>Toko / Merchant</b>: ${escapeHtml(result.merchantName || '-')}\n`;
+    if (result.transactionDate) preview += `📅 <b>Tanggal</b>: ${escapeHtml(result.transactionDate)}\n`;
+    preview += `💰 <b>Total Pembayaran</b>: <b>${formatIDR(result.totalAmount)}</b>\n`;
+    preview += `📁 <b>Kategori</b>: ${escapeHtml(result.suggestedCategory || 'BELANJA')}\n\n`;
 
     if (result.items && result.items.length > 0) {
-      preview += `🛒 **Daftar Barang (terbaca):**\n`;
+      preview += `🛒 <b>Daftar Barang (terbaca):</b>\n`;
       for (const item of result.items.slice(0, 5)) {
-        preview += `• ${item.name}: ${formatIDR(item.price)}\n`;
+        preview += `• ${escapeHtml(item.name)}: ${formatIDR(item.price)}\n`;
       }
       if (result.items.length > 5) {
         preview += `• ...dan ${result.items.length - 5} barang lainnya.\n`;
@@ -65,7 +66,7 @@ export async function handlePhotoMessage(ctx, bot) {
     })).toString('base64');
 
     return await ctx.reply(preview, {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       ...menuKeyboards.confirmReceipt(compactToken),
     });
   } catch (error) {
