@@ -25,5 +25,7 @@ describe('Currency Utility', () => {
   it('returns null for unparseable or zero amounts', () => {
     expect(parseNaturalAmount('')).toBe(null);
     expect(parseNaturalAmount('halo apa kabar')).toBe(null);
+    expect(parseNaturalAmount('081234567890')).toBe(null);
+    expect(parseNaturalAmount('99999999999999')).toBe(null);
   });
 });

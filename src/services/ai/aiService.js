@@ -60,6 +60,8 @@ Aturan penting:
 - Jangan pernah mengarang nominal jika tidak disebutkan. Jika nominal tidak ada, set amount = null dan berikan pesan pada clarificationNeeded.
 - "Gaji 3 juta", "Dapat transfer 500rb", "Pemasukan freelance 1jt" adalah TRANSACTION bertipe INCOME.
 - "Beli nasi goreng 20rb", "Beli bensin 30rb", "Kopi 18rb" adalah TRANSACTION bertipe EXPENSE.
+- Nomor HP (misal: 0812..., 08...), nomor rekening/VA (misal: 12345678901234), nomor meteran/pelanggan PLN BUKAN nominal transaksi! Jangan pernah memasukkan nomor rekening/VA/HP sebagai amount.
+- Nominal amount HARUS berupa angka murni uang dalam Rupiah (maksimal Rp 9,99 Triliun / kurang dari 10000000000000).
 - "Saldo awal 2 juta", "Uang saya sekarang 5 juta" adalah INITIAL_BALANCE.
 - "Buat target laptop 8 juta" -> SAVINGS action CREATE_GOAL.
 - "Nabung 100rb buat laptop" -> SAVINGS action CONTRIBUTE.
@@ -139,9 +141,30 @@ export function fallbackParse(text) {
   const incomeKeywords = ['gaji', 'dapat uang', 'pemasukan', 'transfer masuk', 'jual', 'freelance', 'bonus', 'thr', 'kembalian'];
   const isIncome = incomeKeywords.some((kw) => lower.includes(kw));
 
-  // 4. Amount parsing
-  const amountMatch = lower.match(/(\d+[\d.,]*\s*(?:juta|jt|ribu|rb|k|miliar|m)?)/i);
-  const amount = amountMatch ? parseNaturalAmount(amountMatch[1]) : null;
+  // 4. Amount parsing (prioritizing currency units, ignoring phone numbers)
+  const currencyRegex = /(?:rp\.?\s*)?(\d+(?:[.,]\d+)?\s*(?:juta|jt|ribu|rb|k|miliar|m))\b/i;
+  const rpRegex = /(?:rp\.?\s*)(\d+[\d.,]*)\b/i;
+  const suffixMatch = lower.match(currencyRegex);
+  const rpMatch = lower.match(rpRegex);
+
+  let amount = null;
+  if (suffixMatch) {
+    amount = parseNaturalAmount(suffixMatch[1]);
+  } else if (rpMatch) {
+    amount = parseNaturalAmount(rpMatch[1]);
+  } else {
+    // Plain number fallback: ignore phone numbers starting with 08 or numbers > 12 digits
+    const plainMatches = lower.match(/\b\d+[\d.,]*\b/g);
+    if (plainMatches) {
+      for (const m of plainMatches) {
+        const parsed = parseNaturalAmount(m);
+        if (parsed && parsed > 0 && parsed <= 9999999999999) {
+          amount = parsed;
+          break;
+        }
+      }
+    }
+  }
 
   if (amount) {
     let category = 'LAIN_LAIN';
@@ -211,6 +234,27 @@ export async function parseUserInputWithAI(text) {
     }
 
     const parsed = JSON.parse(rawOutput);
+
+    // Sanitize and validate transaction amount
+    if (parsed?.transaction?.amount) {
+      const num = Number(parsed.transaction.amount);
+      if (isNaN(num) || num <= 0 || num > 9999999999999) {
+        parsed.transaction.amount = null;
+        parsed.clarificationNeeded = parsed.clarificationNeeded || 'Nominal yang terdeteksi tidak valid atau melebihi batas sistem (Rp 9,99 Triliun).';
+      } else {
+        parsed.transaction.amount = Math.round(num);
+      }
+    }
+
+    if (parsed?.initialBalance?.amount) {
+      const num = Number(parsed.initialBalance.amount);
+      if (isNaN(num) || num < 0 || num > 9999999999999) {
+        parsed.initialBalance.amount = null;
+      } else {
+        parsed.initialBalance.amount = Math.round(num);
+      }
+    }
+
     return parsed;
   } catch (error) {
     logger.warn('AI Parsing failed, falling back to rule-based parser:', error.message);

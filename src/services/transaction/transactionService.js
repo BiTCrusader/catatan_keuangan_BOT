@@ -1,6 +1,8 @@
 import { prisma } from '../../config/database.js';
 import { Prisma } from '@prisma/client';
 
+const MAX_AMOUNT = 9999999999999; // Maximum value for Postgres Decimal(15, 2) (Rp 9,99 Triliun)
+
 export const transactionService = {
   /**
    * Retrieves or creates a user by telegramId
@@ -37,7 +39,11 @@ export const transactionService = {
    * Set or update user initial balance
    */
   async setInitialBalance(userId, amount) {
-    const decimalAmount = new Prisma.Decimal(amount);
+    const num = Number(amount);
+    if (isNaN(num) || num < 0 || num > MAX_AMOUNT) {
+      throw new Error('Nominal saldo awal tidak valid atau melebihi batas sistem (Rp 9,99 Triliun).');
+    }
+    const decimalAmount = new Prisma.Decimal(num);
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -101,11 +107,15 @@ export const transactionService = {
    * Creates a new financial transaction (INCOME or EXPENSE) inside a DB transaction
    */
   async createTransaction({ userId, type, category, amount, description, transactionDate }) {
-    if (!amount || Number(amount) <= 0) {
+    const numericAmount = Number(amount);
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
       throw new Error('Nominal transaksi harus lebih besar dari 0');
     }
+    if (numericAmount > MAX_AMOUNT) {
+      throw new Error('Nominal transaksi melebihi batas maksimum sistem (Rp 9,99 Triliun).');
+    }
 
-    const decimalAmount = new Prisma.Decimal(amount);
+    const decimalAmount = new Prisma.Decimal(numericAmount);
     const date = transactionDate ? new Date(transactionDate) : new Date();
 
     return await prisma.$transaction(async (tx) => {

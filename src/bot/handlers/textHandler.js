@@ -74,6 +74,19 @@ export async function handleTextMessage(ctx) {
     // 4. Handle TRANSACTION (INCOME / EXPENSE)
     if (aiResult.intent === 'TRANSACTION' && aiResult.transaction?.amount) {
       const { type, amount, category, description, isExplicitDate, dateString } = aiResult.transaction;
+      const numAmount = Number(amount);
+
+      if (isNaN(numAmount) || numAmount <= 0) {
+        return await ctx.reply('⚠️ Nominal transaksi tidak valid.');
+      }
+
+      if (numAmount > 9999999999999) {
+        return await ctx.reply(
+          '⚠️ <b>Nominal transaksi terlalu besar!</b>\n\n' +
+          'Batas maksimal nominal transaksi adalah Rp 9,99 Triliun. Jika Anda menyertakan nomor rekening, nomor HP, atau nomor meteran, pastikan hanya menuliskan nominal uang yang ditransaksikan (contoh: <i>"Beli pulsa 50rb"</i> atau <i>"Transfer 100rb"</i>).',
+          { parse_mode: 'HTML' }
+        );
+      }
 
       let txDate = new Date();
       if (isExplicitDate && dateString) {
@@ -214,9 +227,9 @@ export async function handleTextMessage(ctx) {
     return await ctx.reply(insight, menuKeyboards.mainMenu());
   } catch (error) {
     logger.error('Error handling text message:', error.message);
-    return await ctx.reply(
-      '⚠️ Maaf, terjadi kesalahan saat memproses pesan Anda. Silakan coba kembali atau gunakan menu di bawah.',
-      menuKeyboards.mainMenu()
-    );
+    const userFacingMsg = error.message?.includes('melebihi batas')
+      ? `⚠️ ${escapeHtml(error.message)}`
+      : '⚠️ Maaf, terjadi kesalahan saat memproses pesan Anda. Silakan coba kembali atau gunakan menu di bawah.';
+    return await ctx.reply(userFacingMsg, menuKeyboards.mainMenu());
   }
 }

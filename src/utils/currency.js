@@ -59,9 +59,16 @@ export function parseNaturalAmount(text) {
 
   // Standard numeric with dots / commas
   // e.g. "50.000" or "50000"
+  // If it matches an Indonesian phone number (starting with 08, 9-14 digits), ignore as currency
+  if (/^08\d{8,12}$/.test(clean.replace(/[\s.-]/g, ''))) {
+    return null;
+  }
+
   const numericOnly = clean.replace(/\./g, '').replace(/,/g, '.');
   const parsed = parseFloat(numericOnly);
   if (!isNaN(parsed) && parsed > 0) {
+    // Postgres Decimal(15, 2) maximum is 9,999,999,999,999
+    if (parsed > 9999999999999) return null;
     return Math.round(parsed);
   }
 

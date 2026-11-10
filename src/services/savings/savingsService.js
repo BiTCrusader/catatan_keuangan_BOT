@@ -3,12 +3,18 @@ import { Prisma } from '@prisma/client';
 import { formatIDR } from '../../utils/currency.js';
 import { escapeHtml } from '../../utils/format.js';
 
+const MAX_AMOUNT = 9999999999999; // Maximum value for Postgres Decimal(15, 2) (Rp 9,99 Triliun)
+
 export const savingsService = {
   /**
    * Create a new savings goal
    */
   async createGoal(userId, { name, targetAmount, deadline }) {
-    const target = new Prisma.Decimal(targetAmount);
+    const num = Number(targetAmount);
+    if (isNaN(num) || num <= 0 || num > MAX_AMOUNT) {
+      throw new Error('Target tabungan tidak valid atau melebihi batas sistem (Rp 9,99 Triliun).');
+    }
+    const target = new Prisma.Decimal(num);
 
     return await prisma.savingsGoal.create({
       data: {
@@ -57,8 +63,8 @@ export const savingsService = {
    */
   async contribute(userId, { goalId, goalName, amount, note }) {
     const numericAmount = Number(amount);
-    if (numericAmount <= 0) {
-      throw new Error('Nominal tabungan harus lebih besar dari 0');
+    if (isNaN(numericAmount) || numericAmount <= 0 || numericAmount > MAX_AMOUNT) {
+      throw new Error('Nominal tabungan tidak valid atau melebihi batas sistem (Rp 9,99 Triliun).');
     }
 
     let goal;
